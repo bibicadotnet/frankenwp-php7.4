@@ -1,10 +1,8 @@
 ARG WORDPRESS_VERSION=latest
-ARG PHP_VERSION=7.4
+ARG PHP_VERSION=8.3
 ARG USER=www-data
 
-
-
-FROM dunglas/frankenphp:latest-builder-php${PHP_VERSION} as builder
+FROM dunglas/frankenphp:latest-builder-php${PHP_VERSION} AS builder
 
 # Copy xcaddy in the builder image
 COPY --from=caddy:builder /usr/bin/xcaddy /usr/bin/xcaddy
@@ -23,8 +21,7 @@ RUN xcaddy build \
     # Add extra Caddy modules here
     --with github.com/stephenmiracle/frankenwp/sidekick/middleware/cache=./cache
 
-
-FROM wordpress:$WORDPRESS_VERSION as wp
+FROM wordpress:$WORDPRESS_VERSION AS wp
 FROM dunglas/frankenphp:latest-php${PHP_VERSION} AS base
 
 LABEL org.opencontainers.image.title=FrankenWP
@@ -34,13 +31,11 @@ LABEL org.opencontainers.image.source=https://github.com/StephenMiracle/frankenw
 LABEL org.opencontainers.image.licenses=MIT
 LABEL org.opencontainers.image.vendor="Stephen Miracle"
 
-
 # Replace the official binary by the one contained your custom modules
 COPY --from=builder /usr/local/bin/frankenphp /usr/local/bin/frankenphp
-ENV WP_DEBUG=${DEBUG:+1}
+#ENV WP_DEBUG=${DEBUG:+1}
 ENV FORCE_HTTPS=0
 ENV PHP_INI_SCAN_DIR=$PHP_INI_DIR/conf.d
-
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -59,6 +54,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libmemcached-dev \
     zlib1g-dev
 
+# Install SQLite
+RUN apt-get update && apt-get install -y --no-install-recommends sqlite3 libsqlite3-dev wget
 
 # install the PHP extensions we need (https://make.wordpress.org/hosting/handbook/handbook/server-environment/#php-extensions)
 RUN install-php-extensions \
@@ -144,7 +141,7 @@ RUN chown -R ${USER}:${USER} /data/caddy && \
     chown -R ${USER}:${USER} /usr/src/wordpress && \
     chown -R ${USER}:${USER} /usr/local/bin/docker-entrypoint.sh
 
-USER $USER
+USER www-data
 
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 CMD ["frankenphp", "run", "--config", "/etc/caddy/Caddyfile"]
