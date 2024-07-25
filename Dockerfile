@@ -83,9 +83,9 @@ COPY --from=wp /usr/local/bin/docker-entrypoint.sh /usr/local/bin/
 RUN set -eux; \
     { \
     echo 'opcache.memory_consumption=128'; \
-    echo 'opcache.interned_strings_buffer=8'; \
-    echo 'opcache.max_accelerated_files=4000'; \
-    echo 'opcache.revalidate_freq=2'; \
+    echo 'opcache.interned_strings_buffer=16'; \
+    echo 'opcache.max_accelerated_files=100000'; \
+    echo 'opcache.max_wasted_percentage=10'; \
     } > $PHP_INI_DIR/conf.d/opcache-recommended.ini
 # https://wordpress.org/support/article/editing-wp-config-php/#configure-error-logging
 RUN { \
